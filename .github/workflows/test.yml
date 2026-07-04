@@ -7,10 +7,10 @@ on:
 
 jobs:
   working-job:
-    run-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Echo Message
-        run : echo "Github Action is working successfully👍"
+        run: echo "Github Action is working successfully👍"
 
  
