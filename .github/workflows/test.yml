@@ -1,9 +1,7 @@
-name : Test Workflows
-
+name: Test Wrokflows
 on:
   push:
-    branches:
-      -main
+    branches: [ main ]
 
 jobs:
   working-job:
@@ -11,6 +9,4 @@ jobs:
 
     steps:
       - name: Echo Message
-        run: echo "Github Action is working successfully👍"
-
- 
+        run: echo "Github Action is working successfully"
