@@ -1,42 +1,41 @@
-name: Main Pipeline for Orchestrate
-
+name: Main Pipeline for  Orchestration
 on:
   push:
     branches:
-      - Main
+      - main
   workflow_dispatch:
 
 jobs:
   verify:
-    uses: ./.github/workflows/test_connrction.yml
-    permissions:
-      id-token: write
+    uses: ./.github/workflows/test_connection.yml
+    permissions: 
       contents: read
+      id-token: write
 
   test_fleet_health_envs:
-    needs: verify_connection
+    needs: verify
     uses: ./.github/workflows/test_fleet_health.yml
     permissions:
-      id-token: write
       contents: read
+      id-token: write
 
   smoke_testing:
-    needs: test_fleet_health_aws
+    needs: test_fleet_health_envs
     uses: ./.github/workflows/smoke_test.yml
     permissions:
-      id-token: write
       contents: read
+      id-token: write
 
   build_push:
     needs: smoke_testing
     uses: ./.github/workflows/build_push.yml
     permissions:
+      contents: read
       id-token: write
-      contents: read 
 
   deploy:
     needs: build_push
-    uses: ./.github/workflows/deploy.yml 
+    uses: ./.github/workflows/deploy.yml
     permissions:
+      contents: read
       id-token: write
-      contents: read   
