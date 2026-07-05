@@ -1,11 +1,11 @@
-name: Test fleet Health & Env Variables
+name: Test fleet
 
 on:
   workflow_call:
 
 permissions:
-  id-token: write
   contents: read
+  id-token: write
 
 jobs:
   test:
@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::865147227423:role/github-actions
+          role-to-assume: arn:aws:iam::865147227423:role/github-action
           aws-region: us-east-1
 
       - name: Fleet Health Checks
@@ -23,19 +23,19 @@ jobs:
           CMD_ID=$(aws ssm send-command \
             --targets "Key=tag:App,Values=flask" \
             --document-name "AWS-RunShellScript" \
-            --parameters '{
-              "commands": [
+            --parameters '{"commands":[
                 "hostname -I",
-                "docker --version 2>/dev/null || echo DOCKER NOT INSTALLED",
-                "aws --version 2>/dev/null || echo AWS CLI NOT INSTALLED",
-                "mysql --version 2>/dev/null || echo MYSQL NOT INSTALLED",
+                "docker --version 2>/dev/null || echo Docker not installed",
+                "aws --version 2>/dev/null || echo AWS CLI not installed",
+                "mysql --version 2>/dev/null || echo MySQL not installed",
                 "aws ssm get-parameters-by-path --path /application/banking --with-decryption --region us-east-1"
               ]
             }' \
-            --query "Command.CommandId" \
+            --query 'Command.CommandId' \
             --output text \
             --region us-east-1)
 
+          echo "Command ID: $CMD_ID"
           echo "cmd_id=$CMD_ID" >> "$GITHUB_OUTPUT"
 
       - name: Show Results
@@ -46,19 +46,21 @@ jobs:
             --command-id "${{ steps.health.outputs.cmd_id }}" \
             --details \
             --region us-east-1 \
-            --query "CommandInvocations[*].{Instance:InstanceId,Status:Status,IP:CommandPlugins[0].Output}" \
+            --query 'CommandInvocations[*].{Instance:InstanceId,Status:Status,Output:CommandPlugins[0].Output}' \
             --output text
 
           FAILED=$(aws ssm list-command-invocations \
             --command-id "${{ steps.health.outputs.cmd_id }}" \
             --details \
+            --region us-east-1 \
             --query "length(CommandInvocations[?Status=='Failed'])" \
-            --output text \
-            --region us-east-1)
+            --output text)
 
-          if [ "$FAILED" -gt 0 ]; then
-            echo "::error::Health Check Failed on $FAILED instances"
+          echo "FAILED = $FAILED"
+
+          if [ "${FAILED:-0}" -gt 0 ]; then
+            echo "::error::$FAILED instance(s) failed the health check."
             exit 1
           fi
 
-          echo "ALL Instances Healthy ✅"
+          echo "✅ All instances are Healthy."
