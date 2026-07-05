@@ -23,7 +23,7 @@ jobs:
             --targets "key=tag:App,Values=flask" \
             --document-name "AWS-RunShellScript" \
             --parameters '{"commands":["hostname -I"]}' \
-            --query 'Commands.CommandId' \
+            --query 'Command.CommandId' \
             --output text
           )
 
