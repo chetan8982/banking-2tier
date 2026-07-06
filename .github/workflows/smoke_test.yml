@@ -30,7 +30,7 @@ jobs:
             --parameters '{
               "commands":[
                 "aws s3 cp s3://865147227423-devops-scripts/smoke_test.py /tmp/smoke_test.py",
-                "python3 /tmp/smoke_test.py",
+                "python3 /tmp/smoke_test.py || exit 1",
                 "rm -f /tmp/smoke_test.py"
               ]
             }' \
