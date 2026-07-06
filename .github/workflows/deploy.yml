@@ -1,12 +1,36 @@
-name : Test Fleet health and Env variables
+name : Application Deploying On AWS
 
 on:
-  workflow_call
+  workflow_call:
+
+  
+permissions:
+  id-token: write
+  contents: read  
+
+env:
+  VERSION: v1
+  IMAGE: 865147227423.dkr.ecr.us-east-1.amazonaws.com/flaskapp-simple-bank
+  REGION: us-east-1
+  S3_BUCKET: s3://865147227423-devops-scripts
 
 jobs:
-  working-job:
-    runs-on: ubuntu-latest
-
+  build-and-deploy:
+    runs-on: ubunut-latest
     steps:
-      - name : Echo Message
-        run : echo "Github Action is working successfully ✅"
+      - uses: action/checkout@v4
+        with:
+          repository: chetan8982/banking-2tier
+          ref: main
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::865147227423:role/github-action
+          aws-region: ${{ env.REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.REGION }} | \
+          docker login --username AWS --password-stdin \
+          865147227423.dkr.ecr.${{ env.REGION }}.amazonaws.com
+          echo "Login Successfull to ECR ✅"

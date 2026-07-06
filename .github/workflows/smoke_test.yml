@@ -3,12 +3,19 @@ name: Smoke Testing for Infra and Networking
 on:
   workflow_call:
 
+permissions:
+  id-token: write
+  contents: read  
+
 jobs:
   smoke:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          repository: chetan8982/banking-2tier
+          ref: main
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -56,11 +63,8 @@ jobs:
             --output text \
             --region us-east-1)
 
-          echo "FAILED=$FAILED"
-
-          if [ "${FAILED:-0}" -gt 0 ]; then
-            echo "::error::Smoke test failed on Fleet"
+          [ "$FAILED" -gt 0 ] && \
+            echo "::error::Smoke test failed on $FAILED instance(s)!" && \
             exit 1
-          fi
 
-          echo "✅ succesfully Smoke test passed."
+          echo "✅ Smoke Test Passed!"

@@ -1,16 +1,16 @@
-name: Test fleet
+name: Test Fleet health and Env Variables
 
 on:
-  workflow_call:
+  workflow_dispatch:
+
 
 permissions:
-  contents: read
   id-token: write
+  contents: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -24,43 +24,37 @@ jobs:
             --targets "Key=tag:App,Values=flask" \
             --document-name "AWS-RunShellScript" \
             --parameters '{"commands":[
-                "hostname -I",
-                "docker --version 2>/dev/null || echo Docker not installed",
-                "aws --version 2>/dev/null || echo AWS CLI not installed",
-                "mysql --version 2>/dev/null || echo MySQL not installed",
-                "aws ssm get-parameters-by-path --path /application/banking --with-decryption --region us-east-1"
-              ]
-            }' \
+              "hostname -I",
+              "docker --version 2>/dev/null || echo DOCKER NOT INSTALLED",
+              "aws --version 2>/dev/null || echo AWS CLI NOT INSTALLED",
+              "mysql --version 2>/dev/null || echo MYSQL NOT INSTALLED",
+              "aws ssm get-parameters-by-path --path /application/banking --with-decryption --region us-east-1 | grep -E Name"
+              ]}' \
             --query 'Command.CommandId' \
             --output text \
-            --region us-east-1)
-
-          echo "Command ID: $CMD_ID"
-          echo "cmd_id=$CMD_ID" >> "$GITHUB_OUTPUT"
-
+            --region us-east-1
+            )
+          echo "cmd_id=$CMD_ID" >> $GITHUB_OUTPUT
+      
+      
       - name: Show Results
-        run: |
+        run: |  
           sleep 20
-
           aws ssm list-command-invocations \
             --command-id "${{ steps.health.outputs.cmd_id }}" \
             --details \
             --region us-east-1 \
-            --query 'CommandInvocations[*].{Instance:InstanceId,Status:Status,Output:CommandPlugins[0].Output}' \
-            --output text
-
+            --output text 
+          
           FAILED=$(aws ssm list-command-invocations \
             --command-id "${{ steps.health.outputs.cmd_id }}" \
-            --details \
-            --region us-east-1 \
             --query "length(CommandInvocations[?Status=='Failed'])" \
-            --output text)
+            --output text \
+            --region us-east-1
+            )
 
-          echo "FAILED = $FAILED"
+          [ "$FAILED" -gt 0 ] && \
+          echo "::error::Health Check Failed on $FAILED instances" && \
+          exit 1
 
-          if [ "${FAILED:-0}" -gt 0 ]; then
-            echo "::error::$FAILED instance(s) failed the health check."
-            exit 1
-          fi
-
-          echo "✅ All instances are Healthy."
+          echo "ALL Instances Healthy ✅"
