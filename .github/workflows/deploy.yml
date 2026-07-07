@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 env:
-  VERSION: v1.0.0
+  VERSION: v1.
   REGION: us-east-1
   ECR: 865147227423.dkr.ecr.us-east-1.amazonaws.com
   IMAGE: 865147227423.dkr.ecr.us-east-1.amazonaws.com/flaskapp-simple-bank
@@ -25,7 +25,7 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam:::865147227423:role/github-action
+          role-to-assume: arn:aws:iam::865147227423:role/github-action
           aws-region: ${{ env.REGION }}
 
       - name: Login to ECR
@@ -55,10 +55,10 @@ jobs:
               "mkdir -p /home/ubuntu/app",
               "aws s3 cp ${{ env.S3_BUCKET }}/docker-compose.yml /home/ubuntu/app/docker-compose.yml",
               "docker pull ${{ env.IMAGE }}:${{ env.VERSION }}",
-              "docker stop simplebank 2>/dev/null  true",
-              "docker rm simplebank 2>/dev/null  true",
+              "docker stop simplebank 2>/dev/null || true",
+              "docker rm simplebank 2>/dev/null || true",
               "cd /home/ubuntu/app && IMAGE_TAG=${{ env.VERSION }} docker compose up -d",
-              "docker ps --filter name=simplebank --format {{.Status}} | grep -q Up && echo CONTAINER_RUNNING  (echo CONTAINER_FAILED && exit 1)"
+              "docker ps --filter name=simplebank --format {{.Status}} | grep -q Up && echo CONTAINER_RUNNING || (echo CONTAINER_FAILED && exit 1)"
             ]}' \
             --query 'Command.CommandId' \
             --output text \
@@ -76,7 +76,7 @@ jobs:
               --region ${{ env.REGION }})
 
             echo "[$i] Status: $STATUS"
-            echo "$STATUS" | grep -q "InProgress\|Pending" && sleep 10  break
+            echo "$STATUS" | grep -q "InProgress\|Pending" && sleep 10 || break
           done
 
           echo "============ DEPLOY RESULTS ============"
