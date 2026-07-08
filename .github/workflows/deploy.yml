@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 env:
-  VERSION: v1.
+  VERSION: v1
   REGION: us-east-1
   ECR: 865147227423.dkr.ecr.us-east-1.amazonaws.com
   IMAGE: 865147227423.dkr.ecr.us-east-1.amazonaws.com/flaskapp-simple-bank
